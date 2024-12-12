@@ -43,9 +43,14 @@ class SemanticKernelRuntime(Runtime):
             return ExecutionStatus.AWAITING_TOOL
         return ExecutionStatus.AWAITING_LLM
 
+    def get_synapse(self, syn_id: str) -> Synapse:
+        execution_data = self.get_synapse_execution_state(syn_id=syn_id)
+        return execution_data.synapse
+
+
     def get_synapse_status(self, syn_id: str) -> SynapseStatus:
-        execution_data = self._executions[syn_id]
-        chat_history: ChatHistory = execution_data.runtime_data["history"]
+        execution_state = self._executions[syn_id]
+        chat_history: ChatHistory = execution_state.runtime_data["history"]
         status = self._parse_state(chat_history)
         results = None
 
@@ -56,7 +61,7 @@ class SemanticKernelRuntime(Runtime):
             }
 
         return SynapseStatus(
-            oagent=execution_data.oagent,
+            oagent=execution_state.oagent,
             status=self._parse_state(chat_history),
             results=results
         )
@@ -65,13 +70,13 @@ class SemanticKernelRuntime(Runtime):
         return self._executions[syn_id]
 
     async def process_synapse(self, syn_id: str) -> None:
-        execution_data = self._executions[syn_id]
-        chat_history: ChatHistory = execution_data.runtime_data["history"]
+        execution_state = self._executions[syn_id]
+        chat_history: ChatHistory = execution_state.runtime_data["history"]
 
         if self._parse_state(chat_history) == ExecutionStatus.COMPLETE:
             return        
         
         # Possible improvement: cache agent kernels for re-use
-        agent_kernel = SemanticKernelAgentKernel(agent_spec=execution_data.oagent, tools=self._tools)
+        agent_kernel = SemanticKernelAgentKernel(agent_spec=execution_state.oagent, tools=self._tools)
 
-        await agent_kernel.process(execution_data=execution_data)
+        await agent_kernel.process(execution_state=execution_state)

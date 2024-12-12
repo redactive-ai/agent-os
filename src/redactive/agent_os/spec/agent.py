@@ -1,19 +1,12 @@
 from typing import Literal
 
-from pydantic import BaseModel, HttpUrl
-
-from redactive.agent_os.spec.assertions import Assertion
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class AgentCapabilityRestriction(BaseModel):
-    class RequireReview(BaseModel):
-        before: bool = False
-        after: bool = False
-        reviewer: Literal["user", "owner"]
 
-    require_review: RequireReview | None = None
-    input_assertion: Assertion
-    output_assertion: Assertion
+    require_review: Literal["user", "owner"] | None = None
+    assert_: str | None = Field(alias="assert")
 
 
 class AgentCapability(BaseModel):
@@ -21,7 +14,8 @@ class AgentCapability(BaseModel):
     collect_reasoning: bool = False
     user_identity: bool
     static_identity: str | None = None
-    restrictions: AgentCapabilityRestriction | None = None
+    input_restriction: AgentCapabilityRestriction | None = None
+    output_restriction: AgentCapabilityRestriction | None = None
 
 class AgentProofreading(BaseModel):
     tool: HttpUrl

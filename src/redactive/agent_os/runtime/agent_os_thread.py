@@ -1,6 +1,5 @@
 import asyncio
 from threading import Thread
-from typing import Union
 
 from redactive.agent_os.runtime.runtime_protocol import Runtime
 from redactive.agent_os.spec.agent import OAgentSpec

@@ -1,22 +1,10 @@
-
-from collections.abc import Callable
+from cel import evaluate
 
 from redactive.agent_os.spec.agent import AgentCapabilityRestriction
-from redactive.agent_os.tools.protocol import Tool
+from redactive.agent_os.spec.synapse import Synapse
 
 
 class ToolSandbox:
-    call: Callable
-
-    def __init__(self, tool: Tool, restrictions: AgentCapabilityRestriction):
-        self._tool = tool
-        setattr(self, "call", self._tool)
-        # functools.update_wrapper(self.call, self._tool)
-        
-    @property
-    def name(self):
-        return self._tool.id
-
-    @property
-    def description(self):
-        return self._tool.description
+    @staticmethod
+    def assert_synapse(restriction: AgentCapabilityRestriction | None, synapse: Synapse) -> bool:
+        return restriction is None or restriction.assert_ is None or evaluate(restriction.assert_, synapse.model_dump(by_alias=True))

@@ -8,6 +8,7 @@ dependencies = [
     "betterproto[compiler]==2.0.0b6",
     "toolz",
     "semantic-kernel",
+    "common-expression-language",
     "cloud-mappings",
     "google-cloud",
     "google-cloud-storage",

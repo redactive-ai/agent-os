@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 class Tool(ABC):
     @property
     @abstractmethod
-    def id(self) -> str: ...
+    def name(self) -> str: ...
 
     @property
     @abstractmethod

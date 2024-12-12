@@ -7,9 +7,9 @@ import httpx
 from redactive.agent_os.tools.protocol import Tool
 
 
-class GenericHttpTool(Tool):
+class JsonHttpTool(Tool):
     @property
-    def id(self) -> str:
+    def name(self) -> str:
         return "generic_http_tool"
     
     @property
@@ -20,4 +20,4 @@ class GenericHttpTool(Tool):
         client = httpx.AsyncClient()
         response = await client.get(url=url)
 
-        return response.text
+        return response.json()
