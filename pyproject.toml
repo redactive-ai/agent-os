@@ -1,0 +1,159 @@
+[build-system]
+requires = ["setuptools>=64", "wheel", "setuptools-git-versioning>=2.0,<3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dependencies = [
+    "click",
+    "betterproto[compiler]==2.0.0b6",
+    "toolz",
+    "semantic-kernel",
+    "cloud-mappings",
+    "google-cloud",
+    "google-cloud-storage",
+    "google-cloud-bigquery",
+    "google-cloud-secret-manager",
+    "grpclib[protobuf]",
+    "langchain==0.2.3",
+    "langchain_core==0.2.5",
+    "langchain-community==0.2.4",
+    "openai",
+    "opensearch-py",
+    "pdfminer.six",
+    "python-magic",
+    "pyyaml",
+    "redis[hiredis]",
+    "sentence-transformers",
+    "tiktoken",
+    "unstructured[doc, docx, ppt, pptx, html]==0.15.0", # a stable version
+    "python-docx",
+    "httpx",
+    "pydantic[email] >=2.0,<2.10", # Match semantic-kernal version restriction
+    "msgraph-sdk",                                      # Sharepoint
+    # Below is for operator, to be merged in properly:
+    "click",
+    "fastapi",
+    "uvicorn[standard]",
+    "google-cloud-firestore",
+    "authlib",
+    "firebase-admin",
+    "hrid",
+    "pkce",
+    "Jinja2",
+    "validators",
+    "psutil",
+    "aiomonitor",
+    # NLTK 3.8.2 is broken, https://github.com/nltk/nltk/issues/3287
+    "nltk==3.8.1",
+    "google-auth-oauthlib",
+    "python-multipart",
+    "fastembed==0.3.6",
+    "onnxruntime<1.20",     # stable version, required by `fastembed`
+    "PyStemmer==2.2.0.3",
+    "networkx==3.4.1",      # graph_analysis
+    "grand-cypher==0.9.0",  # graph_analysis
+    "pyvis==0.3.2",         # graph_analysis
+    "pandas",               # graph_analysis
+    "cloudpathlib==0.20.0", # security data storage
+    "pandas_gbq",           # security collaborative filtering
+    "numpy",
+    "scipy",                # security collaborative filtering
+    "scikit-learn",         # security collaborative filtering
+
+
+]
+name = "redactive-agent-os"
+authors = [{ name = "Redactive ai", email = "support@redactive.ai" }]
+description = "Easily manage secure AI Agents"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+]
+dynamic = ["version"]
+[project.urls]
+Homepage = "https://github.com/redactive-ai/agent-os"
+Issues = "https://github.com/redactive-ai/agent-os/issues"
+
+[project.optional-dependencies]
+dev = ["ruff", "pyright", "pre-commit", "pylint", "grpcio-tools"]
+tests = [
+    "freezegun",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-redis",
+    "pytest-httpx",
+    "pytest-xdist",
+    "evaluate>=0.4.1",
+]
+
+[project.scripts]
+redactive = "redactive.cli.main:cli"
+
+[tool.setuptools.package-data]
+redactive = ["VERSION"]
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Allow F401 to be honored in __init__.py files
+ignore-init-module-imports = false
+# Allow applying these unsafe fixes without the `--unsafe-fixes` flag
+extend-safe-fixes = ["F401"]
+extend-select = [
+    "I",   # isort
+    "UP",  # pyupgrade
+    "TID", # flake8-tidy-imports
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Python 3.10+ typing is not work well with generated grpc code
+"**/redactive/grpc/*" = ["UP"]
+
+[tool.pytest.ini_options]
+# Due to intergrated tests are broken. only run unit tests
+testpaths = ["tests/unit_tests"]
+python_files = "**/*.py"
+python_classes = "*Tests"
+python_functions = "test_*"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "--durations=10 --durations-min=1.0 --disable-warnings -p no:warnings"
+
+[tool.pyright]
+# Turn off if it blocks development
+typeCheckingMode = "basic"
+ignore = [
+    # Generated code
+    "src/redactive/grpc",
+]
+defineConstant = { DEBUG = true }
+exclude = [
+    "**/node_modules",
+    "**/__pycache__",
+    # tests is less important atm
+    "tests",
+]
+include = ["src"]
+
+# Rules
+# Rules customization: https://microsoft.github.io/pyright/#/configuration?id=type-check-diagnostics-settings
+reportMissingImports = "error"
+reportMissingTypeStubs = false
+reportUnusedCoroutine = true
+
+[tool.pylint]
+# use pylint only to detect import errors
+# pyright import error detection isn't as easy to use
+# as many `from X import Y` errors are reported with other issues (reportAttributeAccessIssue)
+disable = "all"
+enable = ["import-error", "cyclic-import", "no-name-in-module"]
+score = false
+clear-cache-post-run = true

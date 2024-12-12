@@ -1,0 +1,39 @@
+{
+    "name": "Redactive",
+    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    "build": {
+      "dockerfile": "Dockerfile",
+      "context": ".."
+    },
+    "features": {
+      "ghcr.io/dhoeric/features/google-cloud-cli:1": {
+        "INSTALL_GKEGCLOUDAUTH_PLUGIN": true,
+        "version": "latest"
+      },
+      "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+        "version": "latest",
+        "helm": "none",
+        "minikube": "none"
+      },
+      "ghcr.io/devcontainers/features/node:1": {}
+    },
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "eamodio.gitlens",
+          "esbenp.prettier-vscode",
+          "svelte.svelte-vscode",
+          "csstools.postcss",
+          "zxh404.vscode-proto3",
+          "ms-python.python",
+          "ms-python.vscode-pylance",
+          "streetsidesoftware.code-spell-checker",
+          "njpwerner.autodocstring",
+          "charliermarsh.ruff",
+          "tamasfe.even-better-toml"
+        ]
+      }
+    },
+    "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && pre-commit install && pip install -e '.[tests,dev]')"
+  }
+  

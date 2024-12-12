@@ -1,0 +1,88 @@
+# Directory that huggingface is configured to download into:
+.model_cache
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+.python-version
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+# Service testing report
+.tests.report
+# Linting; Ruff cache
+.ruff_cache/
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
+__pypackages__/
+
+# Python Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Mac OSX
+.DS_Store
+
+# Javascript
+node_modules
+.pnpm-store
+
+# Our local configs
+redactive.yaml
+
+test_dir/
+!operator/dashboard/src/lib
+
+venv*/
+.aider*
+*.csv
+lib/*
+*permissions*.html
+*.ipynb
+service/lib/*
+test*.txt
+temp/**
