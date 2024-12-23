@@ -1,0 +1,18 @@
+edefault_install_hook_types: [pre-commit, pre-push]
+default_language_version:
+  python: python3.11
+
+# pre-commit hooks references: https://pre-commit.com/hooks.html
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      # prevents giant files from being committed
+      - id: check-added-large-files
+        fail_fast: true
+      # checks for files that contain merge conflict strings
+      - id: check-merge-conflict
+        fail_fast: true
+      # detects the presence of private keys
+      - id: detect-private-key
+        fail_fast: true
