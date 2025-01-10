@@ -1,11 +1,12 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, Header, HTTPException
 from fastapi.responses import RedirectResponse
 
 from redactive.agent_os.agent_os import agent_os
 from redactive.agent_os.spec.agent import OAgentSpec
+from redactive.agent_os.spec.engagements import EngagementUser
 
 _logger = logging.getLogger(__name__)
 
@@ -22,25 +23,24 @@ async def update_agent(agent: Annotated[OAgentSpec, Body()]):
 
 
 @router.get("/{agent_name}")
-async def get_agent(agent_name: str, text: Annotated[str | None, Query()] = None):
+async def get_agent(agent_name: str):
     try:
-        agent = agent_os.get_agent_by_reference(agent_ref=agent_name)
+        return agent_os.get_agent_by_reference(agent_ref=agent_name)
     except KeyError:
         raise HTTPException(status_code=404)
-    
-    if text is None:
-        return agent
-    
-    else:
-        syn_id = agent_os.trigger_agent(agent=agent, text=text)
-        return RedirectResponse(f"/engagements/{syn_id}/", status_code=303)
+
 
 @router.post("/{agent_name}")
-async def trigger_agent(agent_name: str, text: Annotated[str, Body()]) -> RedirectResponse:
+async def trigger_agent(agent_name: str, calling_user_id: Annotated[str, Header()], text: Annotated[str, Body()]) -> RedirectResponse:
+    user = EngagementUser(
+        id=calling_user_id,
+        email=f"{calling_user_id}@redactive.ai"
+    )
+
     try:
         agent = agent_os.get_agent_by_reference(agent_ref=agent_name)
     except KeyError:
         raise HTTPException(status_code=404)
     
-    syn_id = agent_os.trigger_agent(agent=agent, text=text)
+    syn_id = agent_os.trigger_agent(agent=agent, user=user, text=text)
     return RedirectResponse(f"/engagements/{syn_id}/", status_code=303)

@@ -22,13 +22,15 @@ _default_agents: list[OAgentSpec] = [
             "generic_http_tool": {
                 "user_identity": false,
                 "input_restriction": {
-                    "assert": "tools.generic_http_tool.inputs.url.startsWith('https://www.reddit.com/')"
+                    "assertion": "recent.generic_http_tool.inputs.url.startsWith('https://www.reddit.com/')"
                 }
             }
+        },
+        "exposes": {
+            "pages_accessed": "history.generic_http_tool.map(t, t.inputs.url)"
         }
     }
-    """
-    )
+    """)
 ]
 # "assert": "tools.generic_http_tool.inputs.url.startsWith('https://www.reddit.com/')"
 

@@ -80,20 +80,28 @@ class SemanticKernelAgentKernel:
             agent_capability = engagement_runtime_data.oagent.capabilities[tool_name]
             
             kernel_args = function_call_content.to_kernel_arguments()
-            engagement_runtime_data.state.tools[tool_name] = { "inputs": kernel_args }
-
-            if not ToolSandbox.assert_restriction(agent_capability.input_restriction, engagement_runtime_data.state):
-                raise RestrictedToolInput()
+            if not ToolSandbox.update_engagement_input_and_assert_restriction(
+                engagement_state=engagement_runtime_data.state,
+                tool_or_agent_name=tool_name,
+                capability=agent_capability,
+                inputs=kernel_args,
+            ):
+                engagement_runtime_data.internal["error"] = "tool_input_restricted"
+                return
             
             print(f"AGENT ALLOWED TO CALL TOOL {kernel_args}")
             function_result = await kernel_function(self._kernel, kernel_args)
             function_result_content = FunctionResultContent.from_function_call_content_and_result(
                 function_call_content, function_result
             )
-            engagement_runtime_data.state.tools["outputs"] = function_result_content.result
-
-            if not ToolSandbox.assert_restriction(agent_capability.output_restriction, engagement_runtime_data.state):
-                raise RestrictedToolOutput()
+            
+            if not ToolSandbox.update_engagement_output_and_assert_restriction(
+                engagement_state=engagement_runtime_data.state,
+                tool_or_agent_name=tool_name,
+                capability=agent_capability,
+                outputs=function_result_content.result,
+            ):
+                engagement_runtime_data.internal["error"] = "tool_output_restricted"
 
             history.add_message(function_result_content.to_chat_message_content())
 
