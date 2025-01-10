@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redactive.agent_os.agent_os import start_runtime
 from redactive.agent_os.config import AgentOSConfig
 from redactive.agent_os.routes.agent import router as agent_router
-from redactive.agent_os.routes.synapse import router as synapse_router
+from redactive.agent_os.routes.engagement import router as engagement_router
 
 _logger = logging.getLogger(__name__)
 
@@ -37,15 +37,15 @@ def build_server():
         )
 
     # The order the routers are added determines their order in the openapi spec, and consequently the docs order
-    server.include_router(agent_router, prefix="/api")
-    server.include_router(synapse_router, prefix="/api")
+    server.include_router(agent_router)
+    server.include_router(engagement_router)
 
     # TODO: can this be removed?
-    @server.get("/api/health", include_in_schema=False)
+    @server.get("/health", include_in_schema=False)
     def healthcheck():
         return {"status": "ok!"}
 
-    @server.get("/api/build.json", include_in_schema=False)
+    @server.get("/build.json", include_in_schema=False)
     def build():
         return {"version": f"v{version('redactive-agent-os')}"}
 

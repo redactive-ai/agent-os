@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field
 
 
 class AgentCapabilityRestriction(BaseModel):
@@ -18,7 +18,7 @@ class AgentCapability(BaseModel):
     output_restriction: AgentCapabilityRestriction | None = None
 
 class AgentProofreading(BaseModel):
-    tool: HttpUrl
+    tool: str
     filter_: str | None
     transform: str | None
 
@@ -28,7 +28,7 @@ class AgentLifespan(BaseModel):
 
 class OAgentSpec(BaseModel):
     kind: Literal["openOAgentSpec:v1/agent"] = "openOAgentSpec:v1/agent"
-    uri: HttpUrl
+    name: str
     description: str
     intent: str
     owner: str

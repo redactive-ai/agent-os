@@ -17,7 +17,7 @@ from redactive.agent_os.runtime.errors import RestrictedToolInput, RestrictedToo
 from redactive.agent_os.runtime.tool_sandbox import ToolSandbox
 from redactive.agent_os.secrets import get_secret
 from redactive.agent_os.spec.agent import OAgentSpec
-from redactive.agent_os.spec.synapse import SynapseExecutionState
+from redactive.agent_os.spec.engagements import EngagementRuntimeData
 from redactive.agent_os.tools.protocol import Tool
 
 _logger = logging.getLogger(__name__)
@@ -55,22 +55,22 @@ class SemanticKernelAgentKernel:
         self._llm_settings = self._kernel.get_prompt_execution_settings_from_service_id("chat")
         self._llm_settings.function_choice_behavior = FunctionChoiceBehavior.Auto(auto_invoke=False)
         
-    async def process(self, execution_state: SynapseExecutionState):
-        history: ChatHistory = execution_state.runtime_data["history"]
+    async def process(self, engagement_runtime_data: EngagementRuntimeData):
+        history: ChatHistory = engagement_runtime_data.internal["history"]
         previous_finish_reason = history.messages[-1].finish_reason
 
         if (previous_finish_reason == FinishReason.STOP):
             return
 
         if (previous_finish_reason == FinishReason.TOOL_CALLS):
-            await self._use_tool(execution_state=execution_state)
+            await self._use_tool(engagement_runtime_data=engagement_runtime_data)
             return
                 
         else: # Otherwise always LLM CALL (TODO: confirm this?)
-            await self._call_llm(execution_state=execution_state)
+            await self._call_llm(engagement_runtime_data=engagement_runtime_data)
 
-    async def _use_tool(self, execution_state: SynapseExecutionState):
-        history: ChatHistory = execution_state.runtime_data["history"]
+    async def _use_tool(self, engagement_runtime_data: EngagementRuntimeData):
+        history: ChatHistory = engagement_runtime_data.internal["history"]
         print(f"AGENT USING {len(history.messages[-1].items)} TOOLS")
 
         for function_call_content in history.messages[-1].items:
@@ -78,12 +78,12 @@ class SemanticKernelAgentKernel:
 
             kernel_function = self._kernel.get_function(function_call_content.plugin_name, function_call_content.function_name)
             tool_name = kernel_function.name
-            agent_capability = execution_state.oagent.capabilities[tool_name]
+            agent_capability = engagement_runtime_data.oagent.capabilities[tool_name]
             
             kernel_args = function_call_content.to_kernel_arguments()
-            execution_state.synapse.tools[tool_name] = { "inputs": kernel_args }
+            engagement_runtime_data.state.tools[tool_name] = { "inputs": kernel_args }
 
-            if not ToolSandbox.assert_synapse(agent_capability.input_restriction, execution_state.synapse):
+            if not ToolSandbox.assert_restriction(agent_capability.input_restriction, engagement_runtime_data.state):
                 raise RestrictedToolInput()
             
             print(f"AGENT ALLOWED TO CALL TOOL {kernel_args}")
@@ -91,15 +91,15 @@ class SemanticKernelAgentKernel:
             function_result_content = FunctionResultContent.from_function_call_content_and_result(
                 function_call_content, function_result
             )
-            execution_state.synapse.tools["outputs"] = function_result_content.result
+            engagement_runtime_data.state.tools["outputs"] = function_result_content.result
 
-            if not ToolSandbox.assert_synapse(agent_capability.output_restriction, execution_state.synapse):
+            if not ToolSandbox.assert_restriction(agent_capability.output_restriction, engagement_runtime_data.state):
                 raise RestrictedToolOutput()
 
             history.add_message(function_result_content.to_chat_message_content())
 
-    async def _call_llm(self, execution_state: SynapseExecutionState):
-        history: ChatHistory = execution_state.runtime_data["history"]
+    async def _call_llm(self, engagement_runtime_data: EngagementRuntimeData):
+        history: ChatHistory = engagement_runtime_data.internal["history"]
         _logger.info(f"Calling LLM {datetime.now().second}")
         result = await self._llm.get_chat_message_content(
             chat_history=history,

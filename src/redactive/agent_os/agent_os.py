@@ -10,11 +10,11 @@ _all_tools: list[Tool] = [
     JsonHttpTool()
 ]
 
-_all_agents: list[OAgentSpec] = [
+_default_agents: list[OAgentSpec] = [
     OAgentSpec.model_validate_json(json_data=
     """
     {
-        "uri": "http://localhost:8000/internet_reader",
+        "name": "internet_reader",
         "description": "An agent that can browse the internet",
         "owner": "demo-user",
         "intent": "You are a helper agent that can browse the internet for a user and extract information to help them",
@@ -25,7 +25,7 @@ _all_agents: list[OAgentSpec] = [
                     "assert": "tools.generic_http_tool.inputs.url.startsWith('https://www.reddit.com/')"
                 }
             }
-        }                              
+        }
     }
     """
     )
@@ -33,10 +33,14 @@ _all_agents: list[OAgentSpec] = [
 # "assert": "tools.generic_http_tool.inputs.url.startsWith('https://www.reddit.com/')"
 
 global agent_os
-agent_os = AgentOSThread(runtime_type=SemanticKernelRuntime, tools=_all_tools, agents=_all_agents)
+agent_os = AgentOSThread(runtime_type=SemanticKernelRuntime, tools=_all_tools)
 
 @asynccontextmanager
 async def start_runtime(app):
     agent_os.start()
+
+    for default_agent in _default_agents:
+        agent_os.update_agent(agent=default_agent)
+
     yield
     agent_os.stop()
