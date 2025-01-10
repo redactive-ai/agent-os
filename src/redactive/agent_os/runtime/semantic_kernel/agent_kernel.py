@@ -58,7 +58,7 @@ class SemanticKernelAgentKernel:
         history: ChatHistory = engagement_runtime_data.internal["history"]
         previous_finish_reason = history.messages[-1].finish_reason
 
-        if (previous_finish_reason == FinishReason.STOP):
+        if (previous_finish_reason == FinishReason.STOP or "error" in engagement_runtime_data.internal):
             return
 
         if (previous_finish_reason == FinishReason.TOOL_CALLS):
@@ -102,6 +102,7 @@ class SemanticKernelAgentKernel:
                 outputs=function_result_content.result,
             ):
                 engagement_runtime_data.internal["error"] = "tool_output_restricted"
+                return
 
             history.add_message(function_result_content.to_chat_message_content())
 
