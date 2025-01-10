@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, HttpUrl
 class AgentCapabilityRestriction(BaseModel):
 
     require_review: Literal["user", "owner"] | None = None
-    assert_: str | None = Field(alias="assert")
+    assert_: str | None = Field(default=None, alias="assert")
 
 
 class AgentCapability(BaseModel):

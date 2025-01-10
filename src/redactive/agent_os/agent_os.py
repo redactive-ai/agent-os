@@ -30,6 +30,7 @@ _all_agents: list[OAgentSpec] = [
     """
     )
 ]
+# "assert": "tools.generic_http_tool.inputs.url.startsWith('https://www.reddit.com/')"
 
 global agent_os
 agent_os = AgentOSThread(runtime_type=SemanticKernelRuntime, tools=_all_tools, agents=_all_agents)

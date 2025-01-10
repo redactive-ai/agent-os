@@ -7,11 +7,11 @@ from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoic
 from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
 from semantic_kernel.connectors.ai.prompt_execution_settings import PromptExecutionSettings
 from semantic_kernel.contents.chat_history import ChatHistory
-from semantic_kernel.functions import kernel_function
-from semantic_kernel.utils.logging import setup_logging
-from semantic_kernel.contents.utils.finish_reason import FinishReason
 from semantic_kernel.contents.function_call_content import FunctionCallContent
 from semantic_kernel.contents.function_result_content import FunctionResultContent
+from semantic_kernel.contents.utils.finish_reason import FinishReason
+from semantic_kernel.functions import kernel_function
+from semantic_kernel.utils.logging import setup_logging
 
 from redactive.agent_os.runtime.errors import RestrictedToolInput, RestrictedToolOutput
 from redactive.agent_os.runtime.tool_sandbox import ToolSandbox
@@ -71,32 +71,32 @@ class SemanticKernelAgentKernel:
 
     async def _use_tool(self, execution_state: SynapseExecutionState):
         history: ChatHistory = execution_state.runtime_data["history"]
-        function_call_content = history.messages[-1].items[0]
-        assert isinstance(function_call_content, FunctionCallContent)
-        print("CALL TOOL BEGIN")
+        print(f"AGENT USING {len(history.messages[-1].items)} TOOLS")
 
-        kernel_function = self._kernel.get_function(function_call_content.plugin_name, function_call_content.function_name)
-        tool_name = kernel_function.name
-        agent_capability = execution_state.oagent.capabilities[tool_name]
-        
-        kernel_args = function_call_content.to_kernel_arguments()
-        execution_state.synapse.tools[tool_name] = { "inputs": kernel_args }
+        for function_call_content in history.messages[-1].items:
+            assert isinstance(function_call_content, FunctionCallContent)
 
-        if not ToolSandbox.assert_synapse(agent_capability.input_restriction, execution_state.synapse):
-            raise RestrictedToolInput()
-        
-        function_result = await kernel_function(self._kernel, kernel_args)
-        function_result_content = FunctionResultContent.from_function_call_content_and_result(
-            function_call_content, function_result
-        )
-        execution_state.synapse.tools["outputs"] = function_result_content.result
+            kernel_function = self._kernel.get_function(function_call_content.plugin_name, function_call_content.function_name)
+            tool_name = kernel_function.name
+            agent_capability = execution_state.oagent.capabilities[tool_name]
+            
+            kernel_args = function_call_content.to_kernel_arguments()
+            execution_state.synapse.tools[tool_name] = { "inputs": kernel_args }
 
-        if not ToolSandbox.assert_synapse(agent_capability.output_restriction, execution_state.synapse):
-            raise RestrictedToolOutput()
+            if not ToolSandbox.assert_synapse(agent_capability.input_restriction, execution_state.synapse):
+                raise RestrictedToolInput()
+            
+            print(f"AGENT ALLOWED TO CALL TOOL {kernel_args}")
+            function_result = await kernel_function(self._kernel, kernel_args)
+            function_result_content = FunctionResultContent.from_function_call_content_and_result(
+                function_call_content, function_result
+            )
+            execution_state.synapse.tools["outputs"] = function_result_content.result
 
-        history.add_message(function_result_content.to_chat_message_content())
+            if not ToolSandbox.assert_synapse(agent_capability.output_restriction, execution_state.synapse):
+                raise RestrictedToolOutput()
 
-        print("CALL TOOL DONE")
+            history.add_message(function_result_content.to_chat_message_content())
 
     async def _call_llm(self, execution_state: SynapseExecutionState):
         history: ChatHistory = execution_state.runtime_data["history"]
