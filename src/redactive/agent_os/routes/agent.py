@@ -22,7 +22,7 @@ async def update_agent(agent: Annotated[OAgentSpec, Body()]):
     return agent.name
 
 
-@router.get("/{agent_name}")
+@router.get("/{agent_name}", response_model_exclude_defaults=True)
 async def get_agent(agent_name: str):
     try:
         return agent_os.get_agent_by_reference(agent_ref=agent_name)
@@ -31,7 +31,7 @@ async def get_agent(agent_name: str):
 
 
 @router.post("/{agent_name}")
-async def trigger_agent(agent_name: str, calling_user_id: Annotated[str, Header()], text: Annotated[str, Body()]) -> RedirectResponse:
+async def trigger_agent(agent_name: str, calling_user_id: Annotated[str, Header()], text: Annotated[str | None, Body()] = None) -> RedirectResponse:
     user = EngagementUser(
         id=calling_user_id,
         email=f"{calling_user_id}@redactive.ai"
@@ -42,5 +42,7 @@ async def trigger_agent(agent_name: str, calling_user_id: Annotated[str, Header(
     except KeyError:
         raise HTTPException(status_code=404)
     
-    syn_id = agent_os.trigger_agent(agent=agent, user=user, text=text)
-    return RedirectResponse(f"/engagements/{syn_id}/", status_code=303)
+    engagement_id = agent_os.create_engagement(agent=agent, user=user)
+    if text:
+        agent_os.append_to_engagement(engagement_id=engagement_id, text=text)
+    return RedirectResponse(f"/engagements/{engagement_id}/", status_code=303)

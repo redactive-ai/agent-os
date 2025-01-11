@@ -20,9 +20,9 @@ class EngagementState(BaseModel):
     user: EngagementUser
 
     recent_name: str = ""
-    recent: dict[str, CapabilityUse] = Field(default_factory=lambda: {})
+    recent: dict[str, CapabilityUse | None]
     history_names: list[str] = Field(default_factory=lambda: [])
-    history: dict[str, list[CapabilityUse]] = Field(default_factory=lambda: {})
+    history: dict[str, list[CapabilityUse]]
 
 
 class EngagementRuntimeData(BaseModel):
@@ -30,6 +30,7 @@ class EngagementRuntimeData(BaseModel):
     engagement_id: str
     oagent: OAgentSpec
     state: EngagementState
+    error: bool = False
     internal: dict
 
 

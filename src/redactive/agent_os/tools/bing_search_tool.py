@@ -6,7 +6,7 @@ from redactive.agent_os.secrets import get_secret
 from redactive.agent_os.tools.protocol import Tool
 
 
-class BingSearch(Tool):
+class BingSearchTool(Tool):
     @property
     def name(self) -> str:
         return "bing_search_tool"

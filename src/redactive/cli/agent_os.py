@@ -13,5 +13,5 @@ def add_agent_os_commands(cli: Group):
     @cli.command()
     def serve():
         agent_os = build_server()
-        logger.debug("Initialized Management Server")
+        logger.debug("Initialized Agent OS")
         run_app_with_uvicorn(app=agent_os, port=AgentOSConfig().port)

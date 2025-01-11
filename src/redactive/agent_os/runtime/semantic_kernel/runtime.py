@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime
 
 from semantic_kernel.contents.chat_history import ChatHistory
@@ -10,6 +11,8 @@ from redactive.agent_os.spec.engagements import Engagement, EngagementRuntimeDat
 from redactive.agent_os.tools.protocol import Tool
 from redactive.utils.random_gen import random_alpha_numeric_string
 
+_logger = logging.getLogger(__name__)
+
 
 class SemanticKernelRuntime(Runtime):
     _tools: list[Tool]
@@ -19,9 +22,11 @@ class SemanticKernelRuntime(Runtime):
         self._tools = all_tools
         self._executions = {}
 
-    def trigger_agent(self, oagent: OAgentSpec, user: EngagementUser, text: str | None) -> str:
+    def create_engagement(self, oagent: OAgentSpec, user: EngagementUser) -> str:
         # TODO: ensure oagent spec is fulfillable by this runtime
         eng_id = random_alpha_numeric_string(8)
+        history = ChatHistory()
+        history.add_user_message("")
         execution_data = EngagementRuntimeData(
             engagement_id=eng_id,
             oagent=oagent,
@@ -30,28 +35,32 @@ class SemanticKernelRuntime(Runtime):
                 user=EngagementUser(
                     id=user.id,
                     email=user.email,
-                )
+                ),
+                recent={cap: None for cap in oagent.capabilities.keys()},
+                history={cap: [] for cap in oagent.capabilities.keys()}
             ),
-            internal=dict(history=ChatHistory())
+            internal=dict(history=history)
         )
         self._executions[eng_id] = execution_data
-        
-        if text is not None:
-            history: ChatHistory = execution_data.internal["history"]
-            history.add_user_message(text)
-        
         return eng_id
+    
+    def append_to_engagement(self, engagement_id: str, text: str) -> None:
+        engagement = self._executions[engagement_id]
+        history: ChatHistory = engagement.internal["history"]
+        history.add_user_message(text)
 
     @staticmethod
     def _parse_state(data: EngagementRuntimeData) -> Engagement.Status:
-        if "error" in data.internal:
+        if data.error:
             return Engagement.Status.ERROR
+        
         history: ChatHistory = data.internal["history"]
-        last_message = history.messages[-1]
-        if last_message.finish_reason == "stop":
-            return Engagement.Status.COMPLETE
-        if last_message.finish_reason == "TOOL":
-            return Engagement.Status.AWAITING_TOOL
+        if len(history.messages) > 0:
+            last_message = history.messages[-1]
+            if last_message.finish_reason == "stop":
+                return Engagement.Status.COMPLETE
+            if last_message.finish_reason == "TOOL":
+                return Engagement.Status.AWAITING_TOOL
         return Engagement.Status.AWAITING_LLM
 
     @staticmethod
@@ -66,12 +75,6 @@ class SemanticKernelRuntime(Runtime):
 
     def get_engagement_runtime_data(self, engagement_id: str) -> EngagementRuntimeData:
         return self._executions[engagement_id]
-
-
-    def get_engagement_state(self, engagement_id: str) -> EngagementState:
-        runtime_data = self.get_engagement_runtime_data(engagement_id=engagement_id)
-        return runtime_data.state
-
 
     def get_engagement(self, engagement_id: str) -> Engagement:
         runtime_data = self._executions[engagement_id]
@@ -88,9 +91,13 @@ class SemanticKernelRuntime(Runtime):
 
     async def process_engagement(self, engagement_id: str) -> None:
         runtime_data = self._executions[engagement_id]
-
-        if self._parse_state(runtime_data).is_ongoing():
-            # Possible improvement: cache agent kernels for re-use?
-            agent_kernel = SemanticKernelAgentKernel(agent_spec=runtime_data.oagent, tools=self._tools)
-
-            await agent_kernel.process(engagement_runtime_data=runtime_data)
+        
+        if not runtime_data.error:
+            try:
+                if self._parse_state(runtime_data).is_ongoing():
+                    # Possible improvement: cache agent kernels for re-use?
+                    agent_kernel = SemanticKernelAgentKernel(agent_spec=runtime_data.oagent, tools=self._tools)
+                    await agent_kernel.process(engagement_runtime_data=runtime_data)
+            except Exception as exc:
+                _logger.error("Engagement Error: %s", exc, exc_info=True)
+                runtime_data.error = True

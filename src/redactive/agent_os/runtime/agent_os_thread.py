@@ -1,13 +1,10 @@
 import asyncio
-import logging
 from threading import Thread
 
 from redactive.agent_os.runtime.runtime_protocol import Runtime
 from redactive.agent_os.spec.agent import OAgentSpec
 from redactive.agent_os.spec.engagements import Engagement, EngagementRuntimeData, EngagementUser
 from redactive.agent_os.tools.protocol import Tool
-
-_logger = logging.getLogger(__name__)
 
 
 class AgentOSThread(Thread):
@@ -44,10 +41,7 @@ class AgentOSThread(Thread):
 
         while self._running:
             for engagement_id in self._eng_ids:
-                try:
-                    await self._runtime.process_engagement(engagement_id=engagement_id)
-                except Exception as exc:
-                    _logger.error("Engagement Error: %s", exc, exc_info=True)
+                await self._runtime.process_engagement(engagement_id=engagement_id)
 
             await asyncio.sleep(0)
 
@@ -74,14 +68,13 @@ class AgentOSThread(Thread):
     def list_all_agents(self) -> list[OAgentSpec]:
         return list(self._all_agents.values())
 
-    def trigger_agent(self, agent: OAgentSpec, user: EngagementUser, text: str | None) -> str:
-        syn_id = self._runtime.trigger_agent(
-            oagent=agent,
-            user=user,
-            text=text
-        )
-        self._eng_ids.append(syn_id)
-        return syn_id
+    def create_engagement(self, agent: OAgentSpec, user: EngagementUser) -> str:
+        engagement_id = self._runtime.create_engagement(oagent=agent, user=user)
+        self._eng_ids.append(engagement_id)
+        return engagement_id
+    
+    def append_to_engagement(self, engagement_id: str, text: str) -> None:
+        self._runtime.append_to_engagement(engagement_id=engagement_id, text=text)
 
     def get_engagement(self, engagement_id: str) -> Engagement:
         return self._runtime.get_engagement(engagement_id=engagement_id)
