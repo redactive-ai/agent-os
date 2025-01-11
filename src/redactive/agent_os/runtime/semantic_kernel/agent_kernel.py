@@ -86,25 +86,15 @@ class SemanticKernelAgentKernel:
                         
             kernel_args = function_call_content.to_kernel_arguments()
             
-            if not self._tool_sandbox.validate_inputs(engagement=engagement_runtime_data, tool=tool, desired_inputs=kernel_args):
-                engagement_runtime_data.error = True
-                engagement_runtime_data.internal["error"] = "tool_input_restricted"
+            if self._tool_sandbox.should_short_circuit(engagement=engagement_runtime_data, tool=tool):
+                engagement_runtime_data.internal["error"] = "agent short circuited"
                 return
 
             if additional_user_consent := self._tool_sandbox.get_additional_user_consent_required(engagement=engagement_runtime_data, tool=tool):
                 history.add_system_message(additional_user_consent)
                 return
 
-            try:
-                results = await self._tool_sandbox.invoke_tool(engagement=engagement_runtime_data, tool=tool, inputs=kernel_args)
-            except RestrictedToolInput:
-                engagement_runtime_data.error = True
-                engagement_runtime_data.internal["error"] = "tool_input_restricted"
-                return
-            except RestrictedToolOutput:
-                engagement_runtime_data.error = True
-                engagement_runtime_data.internal["error"] = "tool_output_restricted"
-                return
+            results = await self._tool_sandbox.invoke_tool(engagement=engagement_runtime_data, tool=tool, inputs=kernel_args)
 
             function_result_content = FunctionResultContent.from_function_call_content_and_result(
                 function_call_content, results

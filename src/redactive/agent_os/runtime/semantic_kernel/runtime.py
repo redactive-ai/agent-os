@@ -26,7 +26,7 @@ class SemanticKernelRuntime(Runtime):
         # TODO: ensure oagent spec is fulfillable by this runtime
         eng_id = random_alpha_numeric_string(8)
         history = ChatHistory()
-        history.add_user_message("")
+        history.add_system_message(oagent.intent)
         execution_data = EngagementRuntimeData(
             engagement_id=eng_id,
             oagent=oagent,
@@ -48,6 +48,7 @@ class SemanticKernelRuntime(Runtime):
         engagement = self._executions[engagement_id]
         history: ChatHistory = engagement.internal["history"]
         history.add_user_message(text)
+        engagement.capability_attempt_history.append("+external_input")
 
     @staticmethod
     def _parse_state(data: EngagementRuntimeData) -> Engagement.Status:
@@ -55,12 +56,11 @@ class SemanticKernelRuntime(Runtime):
             return Engagement.Status.ERROR
         
         history: ChatHistory = data.internal["history"]
-        if len(history.messages) > 0:
-            last_message = history.messages[-1]
-            if last_message.finish_reason == "stop":
-                return Engagement.Status.COMPLETE
-            if last_message.finish_reason == "TOOL":
-                return Engagement.Status.AWAITING_TOOL
+        last_message = history.messages[-1]
+        if last_message.finish_reason == "stop":
+            return Engagement.Status.COMPLETE
+        if last_message.finish_reason == "TOOL":
+            return Engagement.Status.AWAITING_TOOL
         return Engagement.Status.AWAITING_LLM
 
     @staticmethod

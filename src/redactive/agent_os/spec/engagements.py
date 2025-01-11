@@ -14,15 +14,27 @@ class EngagementState(BaseModel):
     """Internal Engagement State as defined in OpenAgentSpec, used for tool assertions"""
     class CapabilityUse(BaseModel):
         inputs: dict
-        outputs: dict | None
+        outputs: dict
 
     started_at: datetime
     user: EngagementUser
 
+    inputs: dict = Field(default_factory=lambda: {})
+    """The current input to the tool"""
+    outputs: dict = Field(default_factory=lambda: {})
+    """The current tool output"""
+
     recent_name: str = ""
+    """The most recent tool name, prior to this one"""
+
     recent: dict[str, CapabilityUse | None]
+    """The inputs and outputs of each of the most recent usages of each tool"""
+
     history_names: list[str] = Field(default_factory=lambda: [])
+    """An ordered list of names of each tool invocation"""
+
     history: dict[str, list[CapabilityUse]]
+    """Ordered list of inputs and outputs for each tool"""
 
 
 class EngagementRuntimeData(BaseModel):
@@ -30,7 +42,12 @@ class EngagementRuntimeData(BaseModel):
     engagement_id: str
     oagent: OAgentSpec
     state: EngagementState
+
+    capability_attempt_history: list[str] = []
+    """Ordered list of every capability invocation this engagement has attempted. Use to detect short circuiting"""
+    
     error: bool = False
+
     internal: dict
 
 

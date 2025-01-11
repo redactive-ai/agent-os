@@ -41,14 +41,17 @@ _default_agents: list[OAgentSpec] = [
         "name": "reddit_crawler",
         "description": "An agent that can only browse reddit",
         "owner": "demo-user",
-        "intent": "You are a helper agent that can browse the reddit for a user and extract information to help them",
+        "intent": "You are a helper agent that can browse reddit for a user and extract information to help them. You can only access reddit",
         "capabilities": {
             "json_http_tool": {
                 "user_identity": false,
                 "input_restriction": {
-                    "assertion": "recent.json_http_tool.inputs.url.startsWith('https://www.reddit.com/') || recent.json_http_tool.inputs.url.startsWith('https://api.reddit.com/')"
+                    "assertion": "inputs.url.startsWith('https://www.reddit.com/') || inputs.url.startsWith('https://api.reddit.com/')"
                 }
             }
+        },
+        "lifespan": {
+            "short_circuit": 2
         }
     }
     """),

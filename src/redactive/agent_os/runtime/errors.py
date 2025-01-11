@@ -21,3 +21,6 @@ class AgentDefinitionError(AgentOSError):
 
 class UserIdentityNotSupportedForTool(AgentDefinitionError):
     pass
+
+class EngagementShortCircuited(AgentOSError):
+    pass
