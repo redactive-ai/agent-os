@@ -8,4 +8,4 @@ class AgentOSConfig(BaseModel):
     port: int = 8000
     base_uri: str = "http://localhost:8000"
     dashboard_dir: str | None = None
-    allow_localhost_cors: bool = False
+    allow_localhost_cors: bool = True

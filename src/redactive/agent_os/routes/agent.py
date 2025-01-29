@@ -23,7 +23,7 @@ async def update_agent(agent: Annotated[OAgentSpec, Body()]):
 
 
 @router.get("/{agent_name}", response_model_exclude_defaults=True)
-async def get_agent(agent_name: str):
+async def get_agent(agent_name: str) -> OAgentSpec:
     try:
         return agent_os.get_agent_by_reference(agent_ref=agent_name)
     except KeyError:

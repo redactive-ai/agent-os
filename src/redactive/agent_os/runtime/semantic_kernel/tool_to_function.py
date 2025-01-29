@@ -14,7 +14,8 @@ def convert_tool_to_kernel_function(tool: Tool, capability: Capability):
         if not isinstance(tool, ToolWithUserIdentity):
             raise UserIdentityNotSupportedForTool()
         
-        parameters = [p for p in parameters if p["name"] != "user_access_token"]
+        parameters = [p for p in parameters if p["name"] != "access_token"]
 
     setattr(kernel_func, "__kernel_function_parameters__", parameters)
+    print(kernel_func.__dict__)
     return kernel_func

@@ -17,7 +17,7 @@ class GoogleCalendarTool(ToolWithUserIdentity):
     
     @property
     def description(self) -> str:
-        return "Creates an event in the user's google calendar. Authentication is already handled."
+        return "Creates an event in the user's google calendar. Authentication is not required."
 
     def get_user_signin_redirect(self) -> tuple[str, str]:
         flow = Flow.from_client_config(

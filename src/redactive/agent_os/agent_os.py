@@ -25,9 +25,6 @@ _default_agents: list[OAgentSpec] = [
         "capabilities": {
             "json_http_tool": {
                 "user_identity": false
-            },
-            "bing_search_tool": {
-                "user_identity": false
             }
         },
         "exposes": {
@@ -38,17 +35,17 @@ _default_agents: list[OAgentSpec] = [
     OAgentSpec.model_validate_json(json_data=
     """
     {
-        "name": "reddit_crawler",
-        "description": "An agent that can only browse reddit",
+        "name": "reddit_reader_insecure",
+        "description": "An agent that can only browse reddit, but may try not to",
         "owner": "demo-user",
-        "intent": "You are a helper agent that can browse reddit for a user and extract information to help them. You can only access reddit",
+        "intent": "You are a helper agent that can browse reddit for a user and extract information to help them. You may only browse reddit",
         "capabilities": {
             "json_http_tool": {
-                "user_identity": false,
-                "input_restriction": {
-                    "assertion": "inputs.url.startsWith('https://www.reddit.com/') || inputs.url.startsWith('https://api.reddit.com/')"
-                }
+                "user_identity": false
             }
+        },
+        "exposes": {
+            "urls_accessed": "history.json_http_tool.map(t, [t.inputs.url, t.inputs_allowed])"
         },
         "lifespan": {
             "short_circuit": 2
@@ -58,13 +55,23 @@ _default_agents: list[OAgentSpec] = [
     OAgentSpec.model_validate_json(json_data=
     """
     {
-        "name": "meeting_booker",
-        "description": "An agent that can book events in your calendar",
+        "name": "reddit_reader_secure",
+        "description": "An agent that can only browse reddit",
         "owner": "demo-user",
-        "intent": "You are a helper agent that can book events for the user in their calendar",
+        "intent": "You are a helper agent that can browse reddit for a user and extract information to help them. You may only browse reddit",
         "capabilities": {
-            "google_calendar_tool": {
+            "json_http_tool": {
+                "user_identity": false,
+                "input_restriction": {
+                    "assertion": "inputs.url.startsWith('https://www.reddit.com/') || inputs.url.startsWith('https://api.reddit.com/')"
+                }
             }
+        },
+        "exposes": {
+            "urls_accessed": "history.json_http_tool.map(t, [t.inputs.url, t.inputs_allowed])"
+        },
+        "lifespan": {
+            "short_circuit": 2
         }
     }
     """),

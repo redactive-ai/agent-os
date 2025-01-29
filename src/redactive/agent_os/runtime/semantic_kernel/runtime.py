@@ -31,7 +31,8 @@ class SemanticKernelRuntime(Runtime):
             engagement_id=eng_id,
             oagent=oagent,
             state=EngagementState(
-                started_at=datetime.now(UTC),
+                time_started=datetime.now(UTC),
+                time_now=datetime.now(UTC),
                 user=EngagementUser(
                     id=user.id,
                     email=user.email,
@@ -87,7 +88,6 @@ class SemanticKernelRuntime(Runtime):
             status=status,
             results=self._parse_results(runtime_data) if status is Engagement.Status.COMPLETE else None
         )
-
 
     async def process_engagement(self, engagement_id: str) -> None:
         runtime_data = self._executions[engagement_id]

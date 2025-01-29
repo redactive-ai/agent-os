@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 
@@ -11,7 +12,7 @@ from semantic_kernel.contents.function_result_content import FunctionResultConte
 from semantic_kernel.contents.utils.finish_reason import FinishReason
 from semantic_kernel.utils.logging import setup_logging
 
-from redactive.agent_os.runtime.errors import RestrictedToolInput, RestrictedToolOutput
+from redactive.agent_os.runtime.errors import EngagementShortCircuited, RestrictedToolInput, RestrictedToolOutput
 from redactive.agent_os.runtime.semantic_kernel.tool_to_function import convert_tool_to_kernel_function
 from redactive.agent_os.runtime.tool_sandbox import ToolSandbox
 from redactive.agent_os.secrets import get_secret
@@ -40,7 +41,7 @@ class SemanticKernelAgentKernel:
         self._kernel = Kernel()
         self._llm = OpenAIChatCompletion(
             service_id="chat",
-            ai_model_id="gpt-4-turbo",
+            ai_model_id="gpt-4o",
             api_key=get_secret("openai__api-key"),
         )
         self._kernel.add_service(self._llm)
@@ -86,15 +87,11 @@ class SemanticKernelAgentKernel:
                         
             kernel_args = function_call_content.to_kernel_arguments()
             
-            if self._tool_sandbox.should_short_circuit(engagement=engagement_runtime_data, tool=tool):
+            try:
+                results = await self._tool_sandbox.invoke_tool(engagement=engagement_runtime_data, tool=tool, inputs=kernel_args)
+            except EngagementShortCircuited as exc:
                 engagement_runtime_data.internal["error"] = "agent short circuited"
                 return
-
-            if additional_user_consent := self._tool_sandbox.get_additional_user_consent_required(engagement=engagement_runtime_data, tool=tool):
-                history.add_system_message(additional_user_consent)
-                return
-
-            results = await self._tool_sandbox.invoke_tool(engagement=engagement_runtime_data, tool=tool, inputs=kernel_args)
 
             function_result_content = FunctionResultContent.from_function_call_content_and_result(
                 function_call_content, results

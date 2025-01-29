@@ -14,6 +14,8 @@ class Tool(ABC):
     @abstractmethod
     async def __call__(self, **kwds) -> dict[str, Any]: ...
 
+class UserIdentity:
+    token: str
 
 class ToolWithUserIdentity(Tool):
     @abstractmethod
@@ -24,4 +26,4 @@ class ToolWithUserIdentity(Tool):
     def exchange_signin_code(self, signin_code: str, state: str) -> str: ...
 
     @abstractmethod
-    async def __call__(self, access_token: str, **kwds) -> dict[str, Any]: ...
+    async def __call__(self, **kwds) -> dict[str, Any]: ...

@@ -1,4 +1,5 @@
 import logging
+from datetime import UTC, datetime
 from typing import Any
 
 from cel import evaluate
@@ -9,6 +10,7 @@ _logger = logging.getLogger(__name__)
 
 
 def run_cel_assertion(engagement_state: EngagementState, assertion: str) -> Any:
+    engagement_state.time_now = datetime.now(UTC)
     try:
         return evaluate(assertion, engagement_state.model_dump(by_alias=True))
     except Exception as exc:

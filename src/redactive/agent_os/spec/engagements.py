@@ -14,9 +14,14 @@ class EngagementState(BaseModel):
     """Internal Engagement State as defined in OpenAgentSpec, used for tool assertions"""
     class CapabilityUse(BaseModel):
         inputs: dict
+        inputs_allowed: bool
+        success: bool
+        outputs_allowed: bool
         outputs: dict
 
-    started_at: datetime
+    time_started: datetime
+    time_now: datetime
+    
     user: EngagementUser
 
     inputs: dict = Field(default_factory=lambda: {})
@@ -45,7 +50,7 @@ class EngagementRuntimeData(BaseModel):
 
     capability_attempt_history: list[str] = []
     """Ordered list of every capability invocation this engagement has attempted. Use to detect short circuiting"""
-    
+
     error: bool = False
 
     internal: dict
