@@ -48,7 +48,7 @@ dependencies = [
     "psutil",
     "aiomonitor",
     # NLTK 3.8.2 is broken, https://github.com/nltk/nltk/issues/3287
-    "nltk==3.8.1",
+    "nltk==3.9.1",
     "google-auth-oauthlib",
     "python-multipart",
     "fastembed==0.3.6",
