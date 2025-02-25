@@ -18,7 +18,7 @@ dependencies = [
     "google-cloud-bigquery",
     "google-cloud-secret-manager",
     "grpclib[protobuf]",
-    "langchain==0.2.3",
+    "langchain==0.2.5",
     "langchain_core==0.2.5",
     "langchain-community==0.2.4",
     "openai",
