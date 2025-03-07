@@ -1,0 +1,23 @@
+kind: "openagentspec:v1/tool"
+
+description: str, optional
+owner: str, required
+
+container:
+  inputs: object
+    env: list of objects:
+      name: name of env var
+      description: description of env var given to model
+    args: list of objects:
+      name: only used by model, args are supplied in order
+      description: description of env var given to model
+      key: 
+
+  template: [standard k8s pod template]
+
+httpJson:
+  url:
+
+
+awsLambda:
+

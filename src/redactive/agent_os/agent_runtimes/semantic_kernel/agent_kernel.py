@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import datetime
 
@@ -12,13 +11,14 @@ from semantic_kernel.contents.function_result_content import FunctionResultConte
 from semantic_kernel.contents.utils.finish_reason import FinishReason
 from semantic_kernel.utils.logging import setup_logging
 
-from redactive.agent_os.runtime.errors import EngagementShortCircuited, RestrictedToolInput, RestrictedToolOutput
-from redactive.agent_os.runtime.semantic_kernel.tool_to_function import convert_tool_to_kernel_function
-from redactive.agent_os.runtime.tool_sandbox import ToolSandbox
+from redactive.agent_os.agent_runtimes.semantic_kernel.native_tool_to_function import (
+    convert_native_tool_to_kernel_function,
+)
+from redactive.agent_os.runtime_protocols import ToolRuntime
 from redactive.agent_os.secrets import get_secret
 from redactive.agent_os.spec.agent import OAgentSpec
 from redactive.agent_os.spec.engagements import EngagementRuntimeData
-from redactive.agent_os.tools.protocol import Tool
+from redactive.agent_os.tool_runtimes.engagement_enforcer import EngagementEnforcer
 
 _logger = logging.getLogger(__name__)
 
@@ -28,16 +28,15 @@ logging.getLogger("kernel").setLevel(logging.DEBUG)
 
 class SemanticKernelAgentKernel:
     _agent_spec: OAgentSpec
-    _tool_sandbox: ToolSandbox
-    _tools: dict[str, Tool]
+    _tool_runtime: ToolRuntime
+    _engagement_enforcer: EngagementEnforcer
     _kernel: Kernel
     _llm: OpenAIChatCompletion
     _llm_settings: PromptExecutionSettings
 
-    def __init__(self, agent_spec: OAgentSpec, tools: list[Tool]):
+    def __init__(self, agent_spec: OAgentSpec, tool_runtime: ToolRuntime):
         self._agent_spec = agent_spec
-        self._tool_sandbox = ToolSandbox()
-        self._tools = {t.name: t for t in tools}
+        self._engagement_enforcer = EngagementEnforcer()
         self._kernel = Kernel()
         self._llm = OpenAIChatCompletion(
             service_id="chat",
@@ -47,13 +46,10 @@ class SemanticKernelAgentKernel:
         self._kernel.add_service(self._llm)
 
         for tool_name, capability in self._agent_spec.capabilities.items():
-            tool = self._tools.get(tool_name, None)
-            if tool is None:
-                raise NotImplementedError(f"Agent OS does not know about tool '{tool_name}'")
-            
+            tool = tool_runtime.get_tool_by_name(tool_name=tool_name)
             self._kernel.add_function(
                 plugin_name=tool.name,
-                function=convert_tool_to_kernel_function(tool=tool, capability=capability),
+                function=convert_native_tool_to_kernel_function(tool=tool, capability=capability),
             )
 
         # TODO: understand settings:
@@ -80,17 +76,40 @@ class SemanticKernelAgentKernel:
         print(f"AGENT USING {len(history.messages[-1].items)} TOOLS")
 
         for function_call_content in history.messages[-1].items:
+            print(function_call_content)
             assert isinstance(function_call_content, FunctionCallContent)
 
-            kernel_function = self._kernel.get_function(function_call_content.plugin_name, function_call_content.function_name)
-            tool = self._tools[kernel_function.name]
-                        
-            kernel_args = function_call_content.to_kernel_arguments()
-            
-            try:
-                results = await self._tool_sandbox.invoke_tool(engagement=engagement_runtime_data, tool=tool, inputs=kernel_args)
-            except EngagementShortCircuited as exc:
+            if self._engagement_enforcer.check_short_circuit(engagement=engagement_runtime_data):
                 engagement_runtime_data.internal["error"] = "agent short circuited"
+                return
+
+            kernel_function = self._kernel.get_function(function_call_content.plugin_name, function_call_content.function_name)
+            kernel_args = function_call_content.to_kernel_arguments()
+
+            allowed, error_response = self._engagement_enforcer.check_input_restrictions(
+                engagement=engagement_runtime_data,
+                tool_name=kernel_function.name,
+                inputs=kernel_args
+            )
+            if not allowed:
+                function_result_content = FunctionResultContent.from_function_call_content_and_result(
+                    function_call_content, error_response
+                )
+                history.add_message(function_result_content.to_chat_message_content())
+                return
+            
+            results = await self._tool_runtime.invoke_tool(tool_name=kernel_function.name, inputs=kernel_args)
+
+            allowed, error_response = self._engagement_enforcer.check_output_restrictions(
+                engagement=engagement_runtime_data,
+                tool_name=kernel_function.name,
+                outputs=results
+            )
+            if not allowed:
+                function_result_content = FunctionResultContent.from_function_call_content_and_result(
+                    function_call_content, error_response
+                )
+                history.add_message(function_result_content.to_chat_message_content())
                 return
 
             function_result_content = FunctionResultContent.from_function_call_content_and_result(

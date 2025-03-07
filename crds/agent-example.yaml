@@ -1,0 +1,45 @@
+kind: "openagentspec:v1/agent"
+
+description: str, optional
+owner: str, required
+
+remoteAgent:
+    awsBedrock:
+        region: str
+        agentId: str
+
+intent: str, only one of remoteAgent and intent can be specified
+
+guardrails: object | None, can only be specified if remote 
+    user: list of objects:
+        toolName: str
+        rule: OAGENT_ASSERTION
+        message: str
+    model: list of objects:
+        toolName: str
+        rule: OAGENT_ASSERTION
+        message: str
+
+lifespan: object | None, only one of remoteAgent and lifespan can be specified
+    shortCircuit: int
+
+capabilities: dict
+    keys: str
+    values: object
+        collectResults: bool, default True
+        userIdentity: bool, default True
+        serviceAccount: str | None
+        input:
+            approvers: list of str
+            restrictions: list of objects:
+                rule: OAGENT_ASSERTION | None
+                message: str
+        output:
+            approvers: list of str
+            restrictions: list of objects:
+                rule: OAGENT_ASSERTION | None
+                message: str
+
+exposes: object | None
+    keys: str
+    values: OAGENT_SELECTION

@@ -26,7 +26,7 @@ async def append_engagement(engagement_id: str, text: Annotated[str, Body()]) ->
         raise HTTPException(status_code=404)
     return agent_os.get_engagement(engagement_id=engagement_id)
 
-@router.get("/audit")
+@router.get("/audit", response_model_exclude_defaults=True)
 async def get_engagement_runtime_data(engagement_id: str) -> EngagementRuntimeData:
     try:
         return agent_os.get_engagement_runtime_data(engagement_id=engagement_id)

@@ -3,26 +3,38 @@ from datetime import UTC, datetime
 
 from semantic_kernel.contents.chat_history import ChatHistory
 
-from redactive.agent_os.runtime.assertions import run_cel_assertion
-from redactive.agent_os.runtime.runtime_protocol import Runtime
-from redactive.agent_os.runtime.semantic_kernel.agent_kernel import SemanticKernelAgentKernel
+from redactive.agent_os.agent_runtimes.assertions import run_cel_assertion
+from redactive.agent_os.agent_runtimes.semantic_kernel.agent_kernel import SemanticKernelAgentKernel
+from redactive.agent_os.runtime_protocols import MutableAgentRuntime
 from redactive.agent_os.spec.agent import OAgentSpec
 from redactive.agent_os.spec.engagements import Engagement, EngagementRuntimeData, EngagementState, EngagementUser
-from redactive.agent_os.tools.protocol import Tool
+from redactive.agent_os.tool_runtimes.native_tool_runtime import NativeToolRuntime
 from redactive.utils.random_gen import random_alpha_numeric_string
 
 _logger = logging.getLogger(__name__)
 
 
-class SemanticKernelRuntime(Runtime):
-    _tools: list[Tool]
+class SemanticKernelRuntime(MutableAgentRuntime):
+    _agents: dict[str, OAgentSpec]
+    _tool_runtime: NativeToolRuntime
     _executions: dict[str, EngagementRuntimeData]
 
-    def __init__(self, all_tools: list[Tool]):
-        self._tools = all_tools
+    def __init__(self):
+        self._agents = {}
+        self._tool_runtime = NativeToolRuntime()
         self._executions = {}
 
-    def create_engagement(self, oagent: OAgentSpec, user: EngagementUser) -> str:
+    def update_agent(self, oagent_spec: OAgentSpec):
+        self._agents[oagent_spec.name] = oagent_spec
+    
+    def get_oagent_spec(self, agent_name: str) -> OAgentSpec:
+        return self._agents[agent_name]
+
+    def list_all_agents(self) -> list[OAgentSpec]:
+        return list(self._agents.values())
+
+    def create_engagement(self, agent_name: str, user: EngagementUser) -> str:
+        oagent = self.get_oagent_spec(agent_name=agent_name)
         # TODO: ensure oagent spec is fulfillable by this runtime
         eng_id = random_alpha_numeric_string(8)
         history = ChatHistory()
@@ -49,7 +61,7 @@ class SemanticKernelRuntime(Runtime):
         engagement = self._executions[engagement_id]
         history: ChatHistory = engagement.internal["history"]
         history.add_user_message(text)
-        engagement.capability_attempt_history.append("+external_input")
+        engagement.state.history_names.append("+external_input")
 
     @staticmethod
     def _parse_state(data: EngagementRuntimeData) -> Engagement.Status:
@@ -96,7 +108,7 @@ class SemanticKernelRuntime(Runtime):
             try:
                 if self._parse_state(runtime_data).is_ongoing():
                     # Possible improvement: cache agent kernels for re-use?
-                    agent_kernel = SemanticKernelAgentKernel(agent_spec=runtime_data.oagent, tools=self._tools)
+                    agent_kernel = SemanticKernelAgentKernel(agent_spec=runtime_data.oagent, tool_runtime=self._tool_runtime)
                     await agent_kernel.process(engagement_runtime_data=runtime_data)
             except Exception as exc:
                 _logger.error("Engagement Error: %s", exc, exc_info=True)

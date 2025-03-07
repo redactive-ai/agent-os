@@ -5,7 +5,6 @@ build-backend = "setuptools.build_meta"
 [project]
 dependencies = [
     "click",
-    "betterproto[compiler]==2.0.0b6",
     "toolz",
     "semantic-kernel",
     "common-expression-language",
@@ -17,13 +16,6 @@ dependencies = [
     "google-cloud-storage",
     "google-cloud-bigquery",
     "google-cloud-secret-manager",
-    "grpclib[protobuf]",
-    "langchain==0.2.3",
-    "langchain_core==0.2.5",
-    "langchain-community==0.2.4",
-    "openai",
-    "opensearch-py",
-    "pdfminer.six",
     "python-magic",
     "pyyaml",
     "redis[hiredis]",
@@ -35,36 +27,12 @@ dependencies = [
     "pydantic[email] >=2.0,<2.10", # Match semantic-kernal version restriction
     "msgraph-sdk",                                      # Sharepoint
     # Below is for operator, to be merged in properly:
-    "click",
     "fastapi",
     "uvicorn[standard]",
-    "google-cloud-firestore",
     "authlib",
-    "firebase-admin",
-    "hrid",
-    "pkce",
-    "Jinja2",
-    "validators",
-    "psutil",
-    "aiomonitor",
-    # NLTK 3.8.2 is broken, https://github.com/nltk/nltk/issues/3287
-    "nltk==3.9.1",
     "google-auth-oauthlib",
     "python-multipart",
-    "fastembed==0.3.6",
-    "onnxruntime<1.20",     # stable version, required by `fastembed`
-    "PyStemmer==2.2.0.3",
-    "networkx==3.4.1",      # graph_analysis
-    "grand-cypher==0.9.0",  # graph_analysis
-    "pyvis==0.3.2",         # graph_analysis
-    "pandas",               # graph_analysis
-    "cloudpathlib==0.20.0", # security data storage
-    "pandas_gbq",           # security collaborative filtering
-    "numpy",
-    "scipy",                # security collaborative filtering
-    "scikit-learn",         # security collaborative filtering
-
-
+    "kopf",
 ]
 name = "redactive-agent-os"
 authors = [{ name = "Redactive ai", email = "support@redactive.ai" }]

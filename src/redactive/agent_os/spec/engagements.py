@@ -48,9 +48,6 @@ class EngagementRuntimeData(BaseModel):
     oagent: OAgentSpec
     state: EngagementState
 
-    capability_attempt_history: list[str] = []
-    """Ordered list of every capability invocation this engagement has attempted. Use to detect short circuiting"""
-
     error: bool = False
 
     internal: dict

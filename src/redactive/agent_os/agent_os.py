@@ -1,18 +1,8 @@
 from contextlib import asynccontextmanager
 
-from redactive.agent_os.runtime.agent_os_thread import AgentOSThread
-from redactive.agent_os.runtime.semantic_kernel.runtime import SemanticKernelRuntime
+from redactive.agent_os.agent_runtimes.agent_os_thread import AgentOSThread
+from redactive.agent_os.agent_runtimes.semantic_kernel.runtime import SemanticKernelRuntime
 from redactive.agent_os.spec.agent import OAgentSpec
-from redactive.agent_os.tools.bing_search_tool import BingSearchTool
-from redactive.agent_os.tools.google_calendar_tool import GoogleCalendarTool
-from redactive.agent_os.tools.json_http_tool import JsonHttpTool
-from redactive.agent_os.tools.protocol import Tool
-
-_all_tools: list[Tool] = [
-    JsonHttpTool(),
-    BingSearchTool(),
-    GoogleCalendarTool(),
-]
 
 _default_agents: list[OAgentSpec] = [
     OAgentSpec.model_validate_json(json_data=
@@ -78,7 +68,7 @@ _default_agents: list[OAgentSpec] = [
 ]
 
 global agent_os
-agent_os = AgentOSThread(runtime_type=SemanticKernelRuntime, tools=_all_tools)
+agent_os = AgentOSThread(agent_runtime_type=SemanticKernelRuntime)
 
 @asynccontextmanager
 async def start_runtime(app):

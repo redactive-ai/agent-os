@@ -15,7 +15,9 @@
         "helm": "none",
         "minikube": "none"
       },
-      "ghcr.io/devcontainers/features/node:1": {}
+      "ghcr.io/devcontainers/features/node:1": {},
+      "ghcr.io/devcontainers/features/aws-cli:1": {},
+      "ghcr.io/devcontainers-extra/features/aws-sso-cli:1": {}
     },
     "customizations": {
       "vscode": {

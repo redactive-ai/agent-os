@@ -7,7 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from redactive.agent_os.agent_os import start_runtime
 from redactive.agent_os.config import AgentOSConfig
 from redactive.agent_os.routes.agent import router as agent_router
+from redactive.agent_os.routes.aws import router as aws_router
 from redactive.agent_os.routes.engagement import router as engagement_router
+from redactive.agent_os.routes.security import router as security_router
 
 _logger = logging.getLogger(__name__)
 
@@ -39,6 +41,8 @@ def build_server():
     # The order the routers are added determines their order in the openapi spec, and consequently the docs order
     server.include_router(agent_router)
     server.include_router(engagement_router)
+    server.include_router(security_router)
+    server.include_router(aws_router)
 
     # TODO: can this be removed?
     @server.get("/health", include_in_schema=False)
